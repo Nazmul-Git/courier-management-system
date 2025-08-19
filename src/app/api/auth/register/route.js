@@ -1,21 +1,35 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/lib/models/User';
-import bcrypt from 'bcryptjs';
 
 export async function POST(request) {
   try {
     await dbConnect();
     
-    const { name, email, password, role, phone, address, adminCode } = await request.json();
+    const { 
+      name, 
+      email, 
+      password, 
+      confirmPassword,
+      role, 
+      phone, 
+      street,
+      city,
+      state,
+      zipCode,
+      country,
+      vehicleType,
+      licensePlate,
+      preferredPaymentMethod,
+      adminCode 
+    } = await request.json();
 
-    console.log('Registration request:', { email, role, adminCode });
-    console.log('Admin code from env:', process.env.ADMIN_REGISTRATION_CODE);
+    console.log('Registration request:', { email, role });
 
     // Validate required fields
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       return NextResponse.json(
-        { error: 'Name, email, and password are required' },
+        { error: 'Name, email, password, and confirmation are required' },
         { status: 400 }
       );
     }
@@ -37,20 +51,59 @@ export async function POST(request) {
       );
     }
 
+    // Validate password confirmation
+    if (password !== confirmPassword) {
+      return NextResponse.json(
+        { error: 'Passwords do not match' },
+        { status: 400 }
+      );
+    }
+
+    // Validate phone format if provided
+    if (phone && role !== 'admin') {
+      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+      if (!phoneRegex.test(phone)) {
+        return NextResponse.json(
+          { error: 'Please enter a valid phone number' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Validate admin registration
     if (role === 'admin') {
-      // Debug: Check what values we're comparing
       const expectedAdminCode = process.env.ADMIN_REGISTRATION_CODE;
-      console.log('Admin code comparison:', {
-        expected: expectedAdminCode,
-        received: adminCode,
-        match: expectedAdminCode === adminCode
-      });
-
+      
       if (!adminCode || adminCode !== expectedAdminCode) {
         return NextResponse.json(
-          { error: `Invalid admin registration code. Please use the correct admin code.` },
+          { error: 'Invalid admin registration code' },
           { status: 403 }
+        );
+      }
+    }
+
+    // Validate required fields based on role
+    if (role === 'agent') {
+      if (!vehicleType) {
+        return NextResponse.json(
+          { error: 'Vehicle type is required for delivery agents' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (role !== 'admin') {
+      if (!phone) {
+        return NextResponse.json(
+          { error: 'Phone number is required' },
+          { status: 400 }
+        );
+      }
+      
+      if (!street || !city || !state || !zipCode) {
+        return NextResponse.json(
+          { error: 'Complete address information is required' },
+          { status: 400 }
         );
       }
     }
@@ -64,20 +117,44 @@ export async function POST(request) {
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user = await User.create({
+    // Prepare user data based on role
+    const userData = {
       name,
       email,
-      password: hashedPassword,
+      password,
       role,
-      phone: phone || '',
-      address: address || ''
-    });
+      phone: role !== 'admin' ? phone : undefined,
+      address: role !== 'admin' ? {
+        street,
+        city,
+        state,
+        zipCode,
+        country: country || 'Bangladesh'
+      } : undefined
+    };
 
-    console.log('User created successfully:', { email: user.email, role: user.role });
+    // Add role-specific data
+    if (role === 'agent') {
+      userData.agentInfo = {
+        vehicleType,
+        licensePlate: licensePlate || ''
+      };
+    }
+
+    if (role === 'customer') {
+      userData.customerInfo = {
+        preferredPaymentMethod: preferredPaymentMethod || 'cod'
+      };
+    }
+
+    // Create user - password will be hashed by the pre-save hook
+    const user = await User.create(userData);
+
+    console.log('User created successfully:', { 
+      email: user.email, 
+      role: user.role,
+      id: user._id 
+    });
 
     return NextResponse.json({
       success: true,
@@ -86,12 +163,31 @@ export async function POST(request) {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        phone: user.phone
       }
     }, { status: 201 });
 
   } catch (error) {
     console.error('Registration error:', error);
+    
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { error: 'User already exists with this email' },
+        { status: 409 }
+      );
+    }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return NextResponse.json(
+        { error: 'Validation failed', details: errors },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

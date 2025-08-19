@@ -1,6 +1,5 @@
 'use client';
 import { useAuth } from '@/hooks';
-import ProtectedRoute from '@/components/ProtectedRoute';
 
 function AdminDashboardContent() {
   const { user } = useAuth();
@@ -30,8 +29,6 @@ function AdminDashboardContent() {
 
 export default function AdminDashboard() {
   return (
-    <ProtectedRoute requiredRole="admin">
       <AdminDashboardContent />
-    </ProtectedRoute>
   );
 }
