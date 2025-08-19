@@ -5,38 +5,45 @@ import { useRouter } from 'next/navigation';
 export default function CustomerParcels() {
   const router = useRouter();
   const [parcels, setParcels] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = document.cookie.split('; ')
-      .find(row => row.startsWith('token='))
-      ?.split('=')[1];
-    
-    if (!token) {
-      router.push('/auth/login');
-      return;
-    }
-
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    if (payload.role !== 'customer') {
-      router.push('/unauthorized');
-      return;
-    }
-
-    // Fetch customer's parcels
+    // Remove all authentication checks - middleware already handled it
     const fetchParcels = async () => {
       try {
         const res = await fetch('/api/customer/parcels', {
-          headers: { Authorization: `Bearer ${token}` }
+          credentials: 'include' // Send cookies automatically
         });
-        const data = await res.json();
-        setParcels(data);
+        
+        if (res.status === 401 || res.status === 403) {
+          // If API returns unauthorized, redirect to login
+          router.push('/auth/login');
+          return;
+        }
+        
+        if (res.ok) {
+          const data = await res.json();
+          setParcels(data);
+        } else {
+          console.error('Failed to fetch parcels');
+        }
       } catch (error) {
         console.error('Failed to fetch parcels:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchParcels();
   }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -69,6 +76,12 @@ export default function CustomerParcels() {
                 </li>
               ))}
             </ul>
+            {parcels.length === 0 && !isLoading && (
+              <div className="px-6 py-8 text-center">
+                <p className="text-gray-500">No parcels found.</p>
+                <p className="text-sm text-gray-400 mt-2">Create your first shipment to get started.</p>
+              </div>
+            )}
             <div className="px-6 py-4 bg-gray-50 text-right">
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

@@ -55,4 +55,4 @@ const deliverySchema = new mongoose.Schema({
   timestamps: true
 });
 
-export default mongoose.models.Delivery || mongoose.model('Delivery', deliverySchema);
+export default mongoose.models.deliveries || mongoose.model('deliveries', deliverySchema);

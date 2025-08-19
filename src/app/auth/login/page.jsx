@@ -75,8 +75,8 @@ const Login = () => {
       window.location.href = data.user.role === 'admin' 
         ? '/admin/dashboard' 
         : data.user.role === 'agent' 
-          ? '/agent/dashboard' 
-          : '/customer/dashboard';
+          ? '/agent/deliveries' 
+          : '/customer/parcels';
 
     } catch (error) {
       console.error('Login error:', error);
@@ -98,7 +98,7 @@ const Login = () => {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/auth/register" className="font-medium text-indigo-600 hover:text-indigo-500">
               create a new account
             </Link>
           </p>

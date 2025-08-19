@@ -33,7 +33,7 @@ const parcelSchema = new mongoose.Schema({
   trackingNumber: {
     type: String,
     required: true,
-    unique: true,
+    unique: true,        // This automatically creates an index
     uppercase: true
   },
   customer: {
@@ -68,9 +68,9 @@ const parcelSchema = new mongoose.Schema({
     enum: ['document', 'small_package', 'medium_package', 'large_package', 'fragile', 'perishable'],
     required: true
   },
-  weight: { type: Number, required: true }, // in kg
+  weight: { type: Number, required: true },
   dimensions: {
-    length: Number, // in cm
+    length: Number,
     width: Number,
     height: Number
   },
@@ -93,7 +93,7 @@ const parcelSchema = new mongoose.Schema({
   estimatedDelivery: Date,
   actualDelivery: Date,
   deliveryNotes: String,
-  signature: String, // Base64 encoded signature image
+  signature: String,
   
   // Status and tracking
   currentStatus: {
@@ -128,8 +128,7 @@ const parcelSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes
-parcelSchema.index({ trackingNumber: 1 });
+// Indexes - REMOVE the trackingNumber index since it's already created by unique: true
 parcelSchema.index({ customer: 1 });
 parcelSchema.index({ assignedAgent: 1 });
 parcelSchema.index({ currentStatus: 1 });
