@@ -1,75 +1,74 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
-import Parcel from '@/lib/models/Parcel';
 import User from '@/lib/models/User';
+import Parcel from '@/lib/models/Parcel';
+import dbConnect from '@/lib/db';
 
-// GET /api/admin/dashboard - Get admin dashboard statistics
 export async function GET(request) {
   try {
     await dbConnect();
 
-    // Verify admin role from token
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    if (payload.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Get dashboard statistics
-    const [
-      totalParcels,
-      pendingParcels,
-      inTransitParcels,
-      deliveredParcels,
-      totalCustomers,
-      totalAgents,
-      recentParcels,
-      revenueData
-    ] = await Promise.all([
-      Parcel.countDocuments(),
-      Parcel.countDocuments({ status: 'pending' }),
-      Parcel.countDocuments({ status: 'in_transit' }),
-      Parcel.countDocuments({ status: 'delivered' }),
-      User.countDocuments({ role: 'customer' }),
-      User.countDocuments({ role: 'agent' }),
-      Parcel.find().sort({ createdAt: -1 }).limit(10).populate('customer', 'name email'),
-      Parcel.aggregate([
-        { $match: { status: 'delivered' } },
-        { $group: { _id: null, totalRevenue: { $sum: '$price' } } }
-      ])
+    // Get metrics
+    const totalUsers = await User.countDocuments({ role: 'customer' });
+    const totalParcels = await Parcel.countDocuments({});
+    
+    // Get status metrics directly using aggregation
+    const statusMetricsAgg = await Parcel.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
     ]);
-
-    const totalRevenue = revenueData[0]?.totalRevenue || 0;
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        overview: {
-          totalParcels,
-          pendingParcels,
-          inTransitParcels,
-          deliveredParcels,
-          deliveryRate: totalParcels > 0 ? (deliveredParcels / totalParcels * 100).toFixed(1) : 0
-        },
-        users: {
-          totalCustomers,
-          totalAgents
-        },
-        revenue: {
-          total: totalRevenue,
-          codAmount: totalRevenue * 0.6, // Example: 60% COD
-          prepaidAmount: totalRevenue * 0.4 // Example: 40% prepaid
-        },
-        recentActivity: recentParcels
+    
+    // Format status metrics
+    const statusMetrics = {};
+    const allStatuses = ['pending', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered', 'cancelled'];
+    
+    // Initialize all statuses with 0
+    allStatuses.forEach(status => {
+      statusMetrics[status] = 0;
+    });
+    
+    // Update with actual counts
+    statusMetricsAgg.forEach(metric => {
+      if (metric._id && allStatuses.includes(metric._id)) {
+        statusMetrics[metric._id] = metric.count;
       }
     });
 
+    // Get parcels from last 7 days for chart data
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0); // Start of day
+    
+    const dailyParcels = await Parcel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    return NextResponse.json({
+      totalUsers,
+      totalParcels,
+      statusMetrics,
+      dailyParcels
+    });
   } catch (error) {
-    console.error('Admin dashboard error:', error);
+    console.error('Metrics error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

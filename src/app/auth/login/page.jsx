@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'; 
+import { useAuthActions } from '@/hooks';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -10,7 +11,8 @@ const Login = () => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const { login } = useAuthActions(); 
+  const router = useRouter(); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,34 +55,37 @@ const Login = () => {
     if (!validateForm()) return;
     
     setIsLoading(true);
+    setErrors({}); // Clear previous errors
     
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const result = await login(formData);
 
-      const data = await response.json();
+      console.log('Login successful:', result);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
-
-      // Just let the middleware handle the redirect
-      // The cookie is already set by the backend
-      // Force a full page reload to trigger the middleware
-      window.location.href = data.user.role === 'admin' 
-        ? '/admin/dashboard' 
-        : data.user.role === 'agent' 
-          ? '/agent/deliveries' 
-          : '/customer/parcels';
+      // Use router.push instead of window.location.href for SPA navigation
+      router.push(
+        result.user.role === 'admin' 
+          ? '/admin/dashboard' 
+          : result.user.role === 'agent' 
+            ? '/agent/deliveries' 
+            : '/customer/parcels'
+      );
 
     } catch (error) {
       console.error('Login error:', error);
-      setErrors({ submit: error.message || 'Login failed. Please try again.' });
+      
+      // Handle specific error messages
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (error.message.includes('Email and password are required')) {
+        errorMessage = 'Please fill in all required fields';
+      } else if (error.message.includes('Invalid credentials')) {
+        errorMessage = 'Invalid email or password';
+      } else if (error.message.includes('User not found')) {
+        errorMessage = 'No account found with this email';
+      }
+      
+      setErrors({ submit: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +123,7 @@ const Login = () => {
         )}
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email address
@@ -137,7 +142,7 @@ const Login = () => {
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
             </div>
             
-            <div className="mt-4">
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
@@ -180,7 +185,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-75 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-75 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {isLoading ? (
                 <>
@@ -196,38 +201,6 @@ const Login = () => {
                 </>
               )}
             </button>
-          </div>
-          
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <div>
-                <button
-                  type="button"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <i className="fab fa-google text-red-500 mr-2"></i>
-                  Google
-                </button>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <i className="fab fa-facebook text-blue-600 mr-2"></i>
-                  Facebook
-                </button>
-              </div>
-            </div>
           </div>
         </form>
       </div>

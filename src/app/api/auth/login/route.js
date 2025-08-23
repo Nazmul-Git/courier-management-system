@@ -133,7 +133,8 @@ export async function POST(request) {
         role: user.role,
         phone: user.phone,
         profileImage: user.profileImage
-      }
+      },
+      token
     });
 
     // Set secure HTTP-only cookie

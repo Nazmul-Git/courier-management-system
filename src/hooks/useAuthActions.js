@@ -3,84 +3,122 @@ import {
   setLoading, 
   loginSuccess, 
   registerSuccess, 
-  logout, 
+  logout as logoutAction,  
   setError, 
-  clearError,
+  clearError as clearErrorAction,  
   updateUser 
 } from '@/lib/slices/authSlice';
+
 
 export const useAuthActions = () => {
   const dispatch = useDispatch();
 
-  const actions = {
-    login: async (email, password) => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Login failed');
-        }
-
-        dispatch(loginSuccess({
-          user: data.user,
-          token: data.token,
-        }));
-
-        return data;
-      } catch (error) {
-        dispatch(setError(error.message));
-        throw error;
-      }
+  // Helper function to safely access localStorage
+  const safeLocalStorage = {
+    getItem: (key) => {
+      if (typeof window === 'undefined') return null;
+      return localStorage.getItem(key);
     },
-
-    register: async (userData) => {
-      dispatch(setLoading(true));
-      dispatch(clearError());
-
-      try {
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userData),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Registration failed');
-        }
-
-        dispatch(registerSuccess());
-        return data;
-      } catch (error) {
-        dispatch(setError(error.message));
-        throw error;
-      }
+    setItem: (key, value) => {
+      if (typeof window === 'undefined') return;
+      localStorage.setItem(key, value);
     },
-
-    logout: () => {
-      dispatch(logout());
-      // Clear cookies if any
-      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    },
-
-    updateProfile: (userData) => {
-      dispatch(updateUser(userData));
-    },
-
-    clearError: () => {
-      dispatch(clearError());
-    },
+    removeItem: (key) => {
+      if (typeof window === 'undefined') return;
+      localStorage.removeItem(key);
+    }
   };
 
-  return actions;
+  const login = async (credentials) => {
+    dispatch(setLoading(true));
+    dispatch(clearErrorAction());
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+
+      const data = await response.json();
+      // console.log('data is =',data)
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      dispatch(loginSuccess({
+        user: data.user,
+        token: data.token,
+      }));
+
+      // Store token in localStorage - safely
+      if (data.token) {
+        safeLocalStorage.setItem('token', data.token);
+        safeLocalStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      dispatch(setError(errorMessage));
+      throw error;
+    }
+  };
+
+  const register = async (userData) => {
+    dispatch(setLoading(true));
+    dispatch(clearErrorAction());
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      dispatch(registerSuccess());
+      return data;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      dispatch(setError(errorMessage));
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    dispatch(logoutAction());
+    // Clear localStorage - safely
+    safeLocalStorage.removeItem('token');
+    safeLocalStorage.removeItem('user');
+    // Clear cookies if any
+    if (typeof window !== 'undefined') {
+      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    }
+  };
+
+  const updateProfile = (userData) => {
+    dispatch(updateUser(userData));
+    // Update localStorage if needed - safely
+    const currentUser = JSON.parse(safeLocalStorage.getItem('user') || '{}');
+    safeLocalStorage.setItem('user', JSON.stringify({ ...currentUser, ...userData }));
+  };
+
+  const clearError = () => {
+    dispatch(clearErrorAction());
+  };
+
+  return {
+    login,
+    register,
+    logout,
+    updateProfile,
+    clearError,
+  };
 };

@@ -20,7 +20,7 @@ export async function POST(request) {
       country,
       vehicleType,
       licensePlate,
-      preferredPaymentMethod,
+      // preferredPaymentMethod,
       adminCode 
     } = await request.json();
 
@@ -92,7 +92,7 @@ export async function POST(request) {
       }
     }
 
-    if (role !== 'admin') {
+    if (role !== 'admin' && role !== 'customer') {
       if (!phone) {
         return NextResponse.json(
           { error: 'Phone number is required' },
@@ -124,7 +124,7 @@ export async function POST(request) {
       password,
       role,
       phone: role !== 'admin' ? phone : undefined,
-      address: role !== 'admin' ? {
+      address: role !== 'admin' && role !== 'customer' ? {
         street,
         city,
         state,
@@ -141,11 +141,11 @@ export async function POST(request) {
       };
     }
 
-    if (role === 'customer') {
-      userData.customerInfo = {
-        preferredPaymentMethod: preferredPaymentMethod || 'cod'
-      };
-    }
+    // if (role === 'customer') {
+    //   userData.customerInfo = {
+    //     preferredPaymentMethod: preferredPaymentMethod || 'cod'
+    //   };
+    // }
 
     // Create user - password will be hashed by the pre-save hook
     const user = await User.create(userData);

@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; 
+import { useAuthActions } from '@/hooks';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -26,6 +27,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+  const { register } = useAuthActions();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -80,7 +82,7 @@ const Register = () => {
       newErrors.phone = 'Phone number is required';
     }
 
-    if (formData.role !== 'admin') {
+    if (formData.role !== 'admin' && formData.role !== 'customer') {
       if (!formData.street) {
         newErrors.street = 'Street address is required';
       }
@@ -118,40 +120,35 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // Prepare data for API
-      const apiData = {
+      // Prepare data for registration
+      const userData = {
         name: formData.name,
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
         role: formData.role,
         phone: formData.phone,
-        street: formData.street,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        country: formData.country,
-        vehicleType: formData.vehicleType,
-        licensePlate: formData.licensePlate,
-        adminCode: formData.adminCode
+        ...(formData.role !== 'admin' && {
+          street: formData.street,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          country: formData.country
+        }),
+        ...(formData.role === 'agent' && {
+          vehicleType: formData.vehicleType,
+          licensePlate: formData.licensePlate
+        }),
+        ...(formData.role === 'admin' && {
+          adminCode: formData.adminCode
+        })
       };
 
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(apiData),
-      });
+      // Use Redux action instead of direct fetch
+      await register(userData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-
-      // Registration successful
-      console.log('Registration successful:', data);
+      // Registration successful - Redux will handle the state update
+      console.log('Registration successful');
 
       // Redirect to login page with success message
       router.push('/auth/login?message=Registration successful. Please login.');
@@ -176,7 +173,7 @@ const Register = () => {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/auth/login" className="font-medium text-indigo-600 hover:text-indigo-500">
               sign in to your existing account
             </Link>
           </p>
@@ -354,7 +351,7 @@ const Register = () => {
             )}
           </div>
 
-          {formData.role !== 'admin' && (
+          {formData.role !== 'admin' && formData.role !== 'customer' && (
             <>
               <div className="mt-6">
                 <h3 className="text-lg font-medium text-gray-800 mb-4 border-b pb-2">Address Information</h3>
