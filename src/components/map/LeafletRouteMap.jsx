@@ -1,4 +1,3 @@
-// app/components/LeafletRouteMap.jsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,7 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import RoutingMachine from '@/components/map/RoutingMachine';
 
-// Fix for default markers in react-leaflet
+// default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -63,7 +62,7 @@ export default function LeafletRouteMap({ trackParcel, optimizedRoute, currentLo
     }
   }, [optimizedRoute, trackParcel]);
 
-  // Improved geocoding function with better address parsing
+  // geocoding function for address parsing
   const mockGeocodeAddress = async (addressObj) => {
     try {
       const { street, city, state, zipCode, country } = addressObj;
@@ -158,7 +157,7 @@ export default function LeafletRouteMap({ trackParcel, optimizedRoute, currentLo
       };
 
       const originPoint = {
-        lat: 23.7741, // Banasree coordinates
+        lat: 23.7741, 
         lng: 90.4277,
         address: `${trackParcel.origin.street}, ${trackParcel.origin.city}`,
         isOrigin: true

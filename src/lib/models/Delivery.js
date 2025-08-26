@@ -43,9 +43,9 @@ const deliverySchema = new mongoose.Schema({
     enum: ['assigned', 'in_progress', 'completed', 'cancelled', 'failed'],
     default: 'assigned'
   },
-  estimatedDuration: Number, // in minutes
+  estimatedDuration: Number, 
   actualDuration: Number,
-  distance: Number, // in km
+  distance: Number, 
   startedAt: Date,
   completedAt: Date,
   notes: String,

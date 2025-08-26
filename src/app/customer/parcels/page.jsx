@@ -6,6 +6,17 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthActions } from '@/hooks/useAuthActions';
 import LeafletRouteMap from '@/components/map/LeafletRouteMap';
 
+// Known locations in Dhaka for better accuracy
+const KNOWN_DHAKA_LOCATIONS = {
+  'banasree': { lat: 23.7741, lng: 90.4277 },
+  'gulshan': { lat: 23.7940, lng: 90.4150 },
+  'dhanmondi': { lat: 23.7465, lng: 90.3760 },
+  'uttara': { lat: 23.8759, lng: 90.3795 },
+  'mirpur': { lat: 23.8223, lng: 90.3654 },
+  'motijheel': { lat: 23.7341, lng: 90.4129 },
+  'farmgate': { lat: 23.7550, lng: 90.3850 },
+  'mohakhali': { lat: 23.7791, lng: 90.4054 }
+};
 
 const CustomerParcelsPage = () => {
   const [activeTab, setActiveTab] = useState('book');
@@ -13,12 +24,12 @@ const CustomerParcelsPage = () => {
   const [trackingData, setTrackingData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [customerLocation, setCustomerLocation] = useState(null);
   const router = useRouter();
 
   const { user, isAuthenticated, isCustomer, token } = useAuth();
   const { logout } = useAuthActions();
 
-  // console.log(user,isAuthenticated,isCustomer, token)
   // Form states
   const [pickupAddress, setPickupAddress] = useState({
     street: '',
@@ -43,6 +54,85 @@ const CustomerParcelsPage = () => {
     paymentType: 'prepaid',
     codAmount: ''
   });
+
+  // Improved geocoding function with better address parsing
+  const mockGeocodeAddress = async (addressObj) => {
+    try {
+      const { street, city, state, zipCode } = addressObj;
+      
+      // Create a searchable address string
+      const addressString = `${street} ${city} ${state} ${zipCode}`.toLowerCase();
+      
+      // Check for known locations first
+      for (const [key, coords] of Object.entries(KNOWN_DHAKA_LOCATIONS)) {
+        if (addressString.includes(key)) {
+          // Add some randomness based on street details for variety
+          const streetHash = street.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const latVariation = (streetHash % 100) / 10000;
+          const lngVariation = (streetHash % 100) / 10000;
+          
+          return {
+            lat: coords.lat + latVariation,
+            lng: coords.lng + lngVariation
+          };
+        }
+      }
+
+      // Fallback: Use Dhaka center coordinates with variation based on address
+      const hash = addressString.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      
+      // Use more realistic coordinates around Dhaka
+      const baseLat = 23.8103;
+      const baseLng = 90.4125;
+      
+      // Add variation but keep within reasonable Dhaka bounds
+      const lat = baseLat + ((hash % 200) - 100) / 1000; // ±0.1 degree variation
+      const lng = baseLng + ((hash % 200) - 100) / 1000; // ±0.1 degree variation
+      
+      return { lat, lng };
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      // Return default Dhaka coordinates
+      return { lat: 23.8103, lng: 90.4125 };
+    }
+  };
+
+  // Get customer's location based on their address
+  useEffect(() => {
+    const getCustomerLocation = async () => {
+      if (user?.address) {
+        try {
+          // If user has a saved address, geocode it
+          const location = await mockGeocodeAddress(user.address);
+          setCustomerLocation(location);
+        } catch (error) {
+          console.error('Error geocoding customer address:', error);
+        }
+      } else {
+        // Try to get current location using browser geolocation
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              setCustomerLocation({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              });
+            },
+            (error) => {
+              console.error('Error getting location:', error);
+              // Fallback to Dhaka center
+              setCustomerLocation({ lat: 23.8103, lng: 90.4125 });
+            }
+          );
+        } else {
+          // Fallback to Dhaka center
+          setCustomerLocation({ lat: 23.8103, lng: 90.4125 });
+        }
+      }
+    };
+
+    getCustomerLocation();
+  }, [user]);
 
   // Redirect if not authenticated or not a customer
   useEffect(() => {
@@ -160,7 +250,6 @@ const CustomerParcelsPage = () => {
   const handleCancelParcel = async (parcelId) => {
     if (!confirm('Are you sure you want to cancel this parcel?')) return;
 
-    // Use token from Redux state instead of localStorage
     if (!token) {
       console.error('No authentication token found');
       alert('Your session has expired. Please login again.');
@@ -173,7 +262,6 @@ const CustomerParcelsPage = () => {
     setError('');
 
     try {
-      console.log(user, token)
       const response = await fetch(`/api/customer/parcels/${parcelId}`, {
         method: 'PATCH',
         headers: {
@@ -203,7 +291,6 @@ const CustomerParcelsPage = () => {
 
   const handleTrackParcel = (trackingNumber) => {
     const parcelToTrack = parcels.find(p => p.trackingNumber === trackingNumber);
-    console.log(parcelToTrack);
     if (parcelToTrack) {
       setTrackingData(parcelToTrack);
       setActiveTab('track');
@@ -242,7 +329,6 @@ const CustomerParcelsPage = () => {
     return status.replace('_', ' ').toUpperCase();
   };
 
-  // Show loading while checking authentication
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -713,7 +799,7 @@ const CustomerParcelsPage = () => {
                   <h3 className="text-md font-medium text-gray-900 mb-4">Delivery Route</h3>
                   <LeafletRouteMap
                     trackParcel={trackingData}
-                    currentLocation={null} // You can pass real current location if available
+                    currentLocation={customerLocation} 
                     isTracking={true}
                   />
                 </div>

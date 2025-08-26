@@ -15,7 +15,7 @@ const ReportGenerator = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `/api/admin/reports?startDate=${startDate}&endDate=${endDate}`,
+        `/api/admin/report?startDate=${startDate}&endDate=${endDate}`,
         {
           headers: { 'Authorization': `Bearer ${token}` }
         }
@@ -149,81 +149,6 @@ const ReportGenerator = () => {
     }
   };
 
-  // Alternative simple PDF export without jspdf-autotable
-  const exportSimplePDF = () => {
-    if (reportData.length === 0) {
-      alert('No data to export');
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-      
-      // Set initial position
-      let yPosition = 20;
-      const lineHeight = 7;
-      const pageHeight = doc.internal.pageSize.height;
-      const margin = 15;
-
-      // Add title
-      doc.setFontSize(16);
-      doc.text('Parcel Report', margin, yPosition);
-      yPosition += lineHeight * 2;
-
-      // Add date range
-      doc.setFontSize(10);
-      if (startDate && endDate) {
-        doc.text(
-          `Date Range: ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`,
-          margin,
-          yPosition
-        );
-        yPosition += lineHeight;
-      }
-
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, yPosition);
-      yPosition += lineHeight * 2;
-
-      // Add table headers
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text('Tracking #', margin, yPosition);
-      doc.text('Customer', margin + 40, yPosition);
-      doc.text('Status', margin + 90, yPosition);
-      doc.text('COD Amt', margin + 130, yPosition);
-      doc.text('Date', margin + 170, yPosition);
-      yPosition += lineHeight;
-
-      // Add horizontal line
-      doc.line(margin, yPosition, 200 - margin, yPosition);
-      yPosition += lineHeight;
-
-      // Add table rows
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(10);
-
-      reportData.forEach((item, index) => {
-        // Check if we need a new page
-        if (yPosition > pageHeight - 20) {
-          doc.addPage();
-          yPosition = margin;
-        }
-
-        doc.text(item.trackingNumber || 'N/A', margin, yPosition);
-        doc.text(item.customerName || 'Unknown', margin + 40, yPosition);
-        doc.text(item.status || 'N/A', margin + 90, yPosition);
-        doc.text(`$${(item.codAmount || 0).toFixed(2)}`, margin + 130, yPosition);
-        doc.text(new Date(item.createdAt).toLocaleDateString(), margin + 170, yPosition);
-        
-        yPosition += lineHeight;
-      });
-
-      doc.save('parcel_report_simple.pdf');
-    } catch (error) {
-      console.error('Error exporting simple PDF:', error);
-      alert('Error exporting PDF: ' + error.message);
-    }
-  };
 
   return (
     <div className="p-6 bg-white rounded-lg shadow">

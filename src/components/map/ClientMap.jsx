@@ -14,14 +14,14 @@ L.Icon.Default.mergeOptions({
 
 // Custom icons
 const agentIcon = new L.Icon({
-  iconUrl: '/delivery-truck.png', // You'll need to add this icon
+  iconUrl: '/delivery-truck.png', 
   iconSize: [30, 30],
   iconAnchor: [15, 30],
   popupAnchor: [0, -30]
 });
 
 const parcelIcon = new L.Icon({
-  iconUrl: '/package.png', // You'll need to add this icon
+  iconUrl: '/package.png', 
   iconSize: [25, 25],
   iconAnchor: [12, 25],
   popupAnchor: [0, -25]
@@ -80,7 +80,7 @@ const MapComponent = ({ origin, destination, agentLocation }) => {
 
   return (
     <MapContainer
-      center={[39.8283, -98.5795]} // Center of US
+      center={[39.8283, -98.5795]} 
       zoom={4}
       style={{ height: '100%', width: '100%' }}
       whenCreated={setMap}

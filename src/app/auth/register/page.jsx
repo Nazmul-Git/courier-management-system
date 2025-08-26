@@ -147,9 +147,6 @@ const Register = () => {
       // Use Redux action instead of direct fetch
       await register(userData);
 
-      // Registration successful - Redux will handle the state update
-      console.log('Registration successful');
-
       // Redirect to login page with success message
       router.push('/auth/login?message=Registration successful. Please login.');
 

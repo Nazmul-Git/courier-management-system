@@ -38,7 +38,6 @@ function getApproximateCoordinates(zipCode) {
   return zipAreas[zipCode] || zipAreas['1219'];
 }
 
-// GET /api/agents/optimized-route - Get optimized route data
 export async function GET(request) {
   try {
     await dbConnect();
@@ -221,7 +220,7 @@ function simulateRouteOptimization(parcels) {
       });
 
       const nearestParcel = remainingParcels[nearestIndex];
-      const duration = Math.round(minDistance * 3); // ~3 minutes per km
+      const duration = Math.round(minDistance * 3); 
       
       waypoints.push({
         address: nearestParcel.destinationAddress,

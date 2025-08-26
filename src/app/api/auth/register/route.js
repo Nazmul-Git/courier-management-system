@@ -20,7 +20,6 @@ export async function POST(request) {
       country,
       vehicleType,
       licensePlate,
-      // preferredPaymentMethod,
       adminCode 
     } = await request.json();
 
@@ -141,13 +140,6 @@ export async function POST(request) {
       };
     }
 
-    // if (role === 'customer') {
-    //   userData.customerInfo = {
-    //     preferredPaymentMethod: preferredPaymentMethod || 'cod'
-    //   };
-    // }
-
-    // Create user - password will be hashed by the pre-save hook
     const user = await User.create(userData);
 
     console.log('User created successfully:', { 

@@ -29,7 +29,7 @@ export default function ProtectedRoute({ children, requiredRole }) {
   }
 
   if (!isAuthenticated || (requiredRole && user?.role !== requiredRole)) {
-    return null; // Will redirect, so return nothing
+    return null; 
   }
 
   return children;

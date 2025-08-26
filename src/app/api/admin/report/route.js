@@ -1,4 +1,3 @@
-// app/api/admin/reports/route.js
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/db';
@@ -203,8 +202,8 @@ export async function POST(request) {
 
       // Add additional fields if requested
       if (includeFields.includes('customerDetails')) {
-        baseData.customerEmail = parcel.customer?.email || '';
-        baseData.customerPhone = parcel.customer?.phone || '';
+        baseData.email = parcel.customer?.email || '';
+        baseData.phone = parcel.customer?.phone || '';
       }
 
       if (includeFields.includes('addressDetails')) {

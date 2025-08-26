@@ -75,11 +75,8 @@ export default function AgentDashboard() {
         credentials: 'include'
       });
 
-      // console.log('Route response status:', response.status);
-
       if (response.ok) {
         const data = await response.json();
-        // console.log('Optimized route data:', data);
         setOptimizedRoute(data);
         setActiveTab('route');
       } else {
@@ -88,7 +85,6 @@ export default function AgentDashboard() {
         alert('Failed to generate optimized route');
       }
     } catch (error) {
-      // console.error('Error fetching optimized route:', error);
       alert('Error connecting to server');
     } finally {
       setRouteLoading(false);
@@ -126,7 +122,6 @@ export default function AgentDashboard() {
         alert(errorData.error || 'Failed to update status');
       }
     } catch (error) {
-      // console.error('Error updating status:', error);
       alert('Error updating status');
     }
   };
@@ -141,7 +136,6 @@ export default function AgentDashboard() {
           updateLocation(position);
         },
         (error) => {
-          // console.error('Error getting location:', error);
           alert('Please enable location services');
         },
         {
@@ -157,7 +151,6 @@ export default function AgentDashboard() {
           updateLocation(position);
         },
         (error) => {
-          // console.error('Error tracking location:', error);
           setIsTracking(false);
         },
         {
@@ -217,8 +210,8 @@ export default function AgentDashboard() {
       if (response.ok) {
         const data = await response.json();
         alert('Delivery marked as completed!');
-        fetchAssignedParcels(); // Refresh parcels
-        fetchOptimizedRoute(); // Refresh route
+        fetchAssignedParcels(); 
+        fetchOptimizedRoute(); 
       } else {
         const errorData = await response.json().catch(() => ({}));
         alert(errorData.error || 'Failed to update delivery status');

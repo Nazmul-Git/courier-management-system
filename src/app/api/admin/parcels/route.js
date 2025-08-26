@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/db';
 import Parcel from '@/lib/models/Parcel';
-import User from '@/lib/models/User';
 
 // Helper function to verify authentication
 async function verifyAuth(request) {
@@ -26,7 +25,6 @@ async function verifyAuth(request) {
   }
 }
 
-// GET /api/admin/parcels - Get all parcels with filtering
 export async function GET(request) {
   try {
     await dbConnect();

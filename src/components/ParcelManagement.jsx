@@ -179,7 +179,6 @@ const ParcelManagement = () => {
         }
       }
 
-      let result;
       try {
         result = JSON.parse(responseText);
       } catch (e) {

@@ -123,7 +123,6 @@ const userSchema = new mongoose.Schema({
   toJSON: { 
     virtuals: true,
     transform: function(doc, ret) {
-      // Remove sensitive information when converting to JSON
       delete ret.password;
       delete ret.resetPasswordToken;
       delete ret.resetPasswordExpires;
@@ -137,17 +136,14 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Remove duplicate index definitions - these are already created by the schema options
-// userSchema.index({ email: 1 }); // Duplicate of 'unique: true' on email field
-// userSchema.index({ 'address.location': '2dsphere' }); // Already defined in addressSchema
 
 // Keep only the additional indexes that aren't automatically created
 userSchema.index({ role: 1 });
 userSchema.index({ 'agentInfo.currentLocation': '2dsphere' });
 userSchema.index({ isActive: 1 });
 userSchema.index({ createdAt: -1 });
-userSchema.index({ lockUntil: 1 }); // For checking locked accounts
-userSchema.index({ loginAttempts: 1 }); // For security queries
+userSchema.index({ lockUntil: 1 }); 
+userSchema.index({ loginAttempts: 1 }); 
 
 // Virtual for full address
 userSchema.virtual('fullAddress').get(function() {
@@ -175,7 +171,7 @@ userSchema.methods.getRoleDisplayName = function() {
 // Method to check if user can be assigned deliveries
 userSchema.methods.canAcceptDelivery = function() {
   if (this.role !== 'agent') return false;
-  return this.agentInfo.isAvailable && this.agentInfo.activeDeliveries < 5; // Max 5 active deliveries
+  return this.agentInfo.isAvailable && this.agentInfo.activeDeliveries < 5; 
 };
 
 // Method to increment login attempts and lock account if needed
@@ -193,7 +189,7 @@ userSchema.methods.incrementLoginAttempts = function() {
   
   // Lock the account if we've reached max attempts and it's not locked already
   if (this.loginAttempts + 1 >= 5 && !this.isLocked) {
-    updates.$set = { lockUntil: Date.now() + 30 * 60 * 1000 }; // 30 minutes
+    updates.$set = { lockUntil: Date.now() + 30 * 60 * 1000 }; 
   }
   
   return this.updateOne(updates);
@@ -207,7 +203,6 @@ userSchema.pre('save', async function(next) {
   try {
     // Generate a salt
     const salt = await bcrypt.genSalt(12);
-    // Hash the password along with our new salt
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {
@@ -235,5 +230,4 @@ userSchema.methods.resetLoginAttempts = function() {
   });
 };
 
-// Fix for the export statement
 export default mongoose.models.users || mongoose.model('users', userSchema);

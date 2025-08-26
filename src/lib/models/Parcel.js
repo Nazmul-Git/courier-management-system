@@ -98,7 +98,6 @@ ParcelSchema.statics.getStatusMetrics = async function() {
   }
 };
 
-// Check if model already exists to prevent OverwriteModelError
 const Parcel = mongoose.models.parcels || mongoose.model('parcels', ParcelSchema);
 
 export default Parcel;

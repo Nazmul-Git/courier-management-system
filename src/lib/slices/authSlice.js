@@ -25,7 +25,7 @@ const authSlice = createSlice({
       state.error = null;
     },
     registerSuccess: (state, action) => {
-      // FIXED: Add user data and authentication status
+      // Add user data and authentication status
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;

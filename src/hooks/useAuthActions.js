@@ -41,7 +41,6 @@ export const useAuthActions = () => {
       });
 
       const data = await response.json();
-      // console.log('data is =',data)
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
@@ -97,10 +96,10 @@ export const useAuthActions = () => {
       const data = JSON.parse(responseText);
       console.log('Registration successful data:', data);
 
-      // FIXED: Pass user data and token to registerSuccess
+      // Pass user data and token to registerSuccess
       dispatch(registerSuccess({
-        user: data.user, // Make sure your API returns user data
-        token: data.token // Make sure your API returns a token
+        user: data.user, 
+        token: data.token 
       }));
 
       // Also store in localStorage
@@ -133,7 +132,6 @@ export const useAuthActions = () => {
 
   const updateProfile = (userData) => {
     dispatch(updateUser(userData));
-    // Update localStorage if needed - safely
     const currentUser = JSON.parse(safeLocalStorage.getItem('user') || '{}');
     safeLocalStorage.setItem('user', JSON.stringify({ ...currentUser, ...userData }));
   };

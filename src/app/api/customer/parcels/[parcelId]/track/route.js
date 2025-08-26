@@ -1,10 +1,10 @@
-// app/api/customer/parcels/[trackingNumber]/track/route.js
+
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/db';
 import Parcel from '@/lib/models/Parcel';
 
-// Helper function to verify authentication (same as above)
+// Helper function to verify authentication 
 async function verifyAuth(request) {
   const token = request.cookies.get('auth_token')?.value;
   
@@ -25,7 +25,6 @@ async function verifyAuth(request) {
   }
 }
 
-// GET /api/customer/parcels/[trackingNumber]/track - Track a parcel
 export async function GET(request, { params }) {
   try {
     await dbConnect();
@@ -55,7 +54,6 @@ export async function GET(request, { params }) {
       );
     }
 
-    // In a real application, you would fetch real-time tracking data here
     // This is a mock implementation
     const trackingHistory = [
       {
@@ -70,7 +68,7 @@ export async function GET(request, { params }) {
       trackingHistory.push({
         status: 'picked_up',
         location: parcel.origin.city,
-        timestamp: new Date(parcel.createdAt.getTime() + 2 * 60 * 60 * 1000), // 2 hours later
+        timestamp: new Date(parcel.createdAt.getTime() + 2 * 60 * 60 * 1000), 
         description: 'Parcel picked up from sender'
       });
     }
@@ -79,7 +77,7 @@ export async function GET(request, { params }) {
       trackingHistory.push({
         status: 'in_transit',
         location: 'In Transit',
-        timestamp: new Date(parcel.createdAt.getTime() + 4 * 60 * 60 * 1000), // 4 hours later
+        timestamp: new Date(parcel.createdAt.getTime() + 4 * 60 * 60 * 1000), 
         description: 'Parcel in transit to destination'
       });
     }
@@ -88,7 +86,7 @@ export async function GET(request, { params }) {
       trackingHistory.push({
         status: 'out_for_delivery',
         location: parcel.destination.city,
-        timestamp: new Date(parcel.createdAt.getTime() + 6 * 60 * 60 * 1000), // 6 hours later
+        timestamp: new Date(parcel.createdAt.getTime() + 6 * 60 * 60 * 1000), 
         description: 'Out for delivery'
       });
     }

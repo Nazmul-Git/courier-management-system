@@ -1,4 +1,4 @@
-// app/api/customer/parcels/route.js
+
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/db';

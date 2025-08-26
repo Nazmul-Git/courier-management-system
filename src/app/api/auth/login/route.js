@@ -7,8 +7,8 @@ import rateLimit from '@/lib/rateLimite';
 
 // Rate limiting configuration
 const limiter = rateLimit({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 500, // Max users per minute
+  interval: 60 * 1000, 
+  uniqueTokenPerInterval: 500, 
 });
 
 export async function POST(request) {
@@ -16,7 +16,7 @@ export async function POST(request) {
     await dbConnect();
     
     // Apply rate limiting
-    const rateLimitResult = await limiter.check(request, 5); // 5 requests per minute
+    const rateLimitResult = await limiter.check(request, 5); 
     if (rateLimitResult.status === 429) {
       return NextResponse.json(
         { error: 'Too many login attempts. Please try again later.' },
@@ -59,7 +59,7 @@ export async function POST(request) {
       const lockTimeLeft = Math.ceil((user.lockUntil - Date.now()) / 1000 / 60);
       return NextResponse.json(
         { error: `Account is temporarily locked. Try again in ${lockTimeLeft} minutes.` },
-        { status: 423 } // 423 Locked
+        { status: 423 } 
       );
     }
 
@@ -84,7 +84,7 @@ export async function POST(request) {
       // Lock account after 5 failed attempts for 30 minutes
       if (user.loginAttempts + 1 >= 5) {
         await User.findByIdAndUpdate(user._id, {
-          lockUntil: Date.now() + 30 * 60 * 1000, // 30 minutes
+          lockUntil: Date.now() + 30 * 60 * 1000, 
           loginAttempts: 0
         });
         
@@ -142,7 +142,7 @@ export async function POST(request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 // 1 day in seconds
+      maxAge: 24 * 60 * 60 
     });
 
     return response;
@@ -196,7 +196,7 @@ export async function GET(request) {
         }
       });
     } catch (jwtError) {
-      // Clear invalid token
+      
       const response = NextResponse.json(
         { isAuthenticated: false },
         { status: 200 }
