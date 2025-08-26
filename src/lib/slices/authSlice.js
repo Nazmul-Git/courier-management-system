@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-// Remove the isBrowser check from here and handle it differently
 const getInitialState = () => {
   return {
     user: null,
@@ -25,7 +24,11 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
-    registerSuccess: (state) => {
+    registerSuccess: (state, action) => {
+      // FIXED: Add user data and authentication status
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
       state.loading = false;
       state.error = null;
     },
@@ -48,7 +51,6 @@ const authSlice = createSlice({
         state.user = { ...state.user, ...action.payload };
       }
     },
-    // Add a new action to initialize from localStorage
     initializeAuth: (state) => {
       if (typeof window !== 'undefined') {
         try {
@@ -62,7 +64,6 @@ const authSlice = createSlice({
           }
         } catch (error) {
           console.error('Error initializing auth from localStorage:', error);
-          // Clear corrupted data
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
@@ -79,7 +80,7 @@ export const {
   setError,
   clearError,
   updateUser,
-  initializeAuth, // Export the new action
+  initializeAuth,
 } = authSlice.actions;
 
 export default authSlice.reducer;

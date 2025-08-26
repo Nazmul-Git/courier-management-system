@@ -5,7 +5,22 @@ const addressSchema = new mongoose.Schema({
   city: { type: String, required: true },
   state: { type: String, required: true },
   zipCode: { type: String, required: true },
-  country: { type: String, default: 'Bangladesh' }
+  country: { type: String, default: 'Bangladesh' },
+  coordinates: {
+    type: [Number], // [longitude, latitude]
+    default: [0, 0]
+  },
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      default: [0, 0]
+    }
+  }
 });
 
 const ParcelSchema = new mongoose.Schema({

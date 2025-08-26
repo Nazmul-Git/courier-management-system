@@ -67,7 +67,7 @@ const Login = () => {
         result.user.role === 'admin' 
           ? '/admin/dashboard' 
           : result.user.role === 'agent' 
-            ? '/agent/deliveries' 
+            ? '/agents/deliveries' 
             : '/customer/parcels'
       );
 

@@ -83,7 +83,7 @@ const ParcelManagement = () => {
           'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
-          action: 'assign-agents',
+          action: 'assign-agent',
           parcelId,
           agentId
         })
@@ -430,7 +430,7 @@ const ParcelManagement = () => {
                 >
                   <option value="" disabled>Select an agent</option>
                   {getRecommendedAgents(selectedParcel).map(agent => (
-                    <option key={agent._id} value={agent.id}>
+                    <option key={agent._id} value={agent._id}>
                       {agent.name} - {agent.email}
                       {agent.city && ` - ${agent.city}`}
                     </option>

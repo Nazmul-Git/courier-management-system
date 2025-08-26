@@ -158,43 +158,6 @@ export async function POST(request) {
       });
     }
 
-    // Handle auto-assign agents
-    if (action === 'assign-agents') {
-      const unassignedParcels = await Parcel.find({
-        assignedAgent: { $exists: false },
-        status: 'pending'
-      }).populate('customer', 'name email');
-
-      const availableAgents = await User.find({
-        role: 'agent',
-        isActive: true
-      }).select('name email phone location');
-
-      let assignedCount = 0;
-      const results = [];
-
-      for (const parcel of unassignedParcels) {
-        if (availableAgents.length > 0) {
-          const agent = availableAgents[assignedCount % availableAgents.length];
-          parcel.assignedAgent = agent._id;
-          parcel.status = 'assigned';
-          await parcel.save();
-          assignedCount++;
-          results.push({
-            parcelId: parcel._id,
-            trackingNumber: parcel.trackingNumber,
-            agentId: agent._id,
-            agentName: agent.name
-          });
-        }
-      }
-
-      return NextResponse.json({
-        message: `Assigned ${assignedCount} parcels to agents`,
-        assignedCount,
-        results
-      });
-    }
 
     // Handle parcel creation
     if (action === 'create') {

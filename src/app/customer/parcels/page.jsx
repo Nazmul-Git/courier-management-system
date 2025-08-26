@@ -4,20 +4,21 @@ import { useRouter } from 'next/navigation';
 import Head from 'next/head';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthActions } from '@/hooks/useAuthActions';
+import LeafletRouteMap from '@/components/map/LeafletRouteMap';
 
 
-  const CustomerParcelsPage = () => {
-    const [activeTab, setActiveTab] = useState('book');
-    const [parcels, setParcels] = useState([]);
-    const [trackingData, setTrackingData] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const router = useRouter();
+const CustomerParcelsPage = () => {
+  const [activeTab, setActiveTab] = useState('book');
+  const [parcels, setParcels] = useState([]);
+  const [trackingData, setTrackingData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-    const { user, isAuthenticated, isCustomer, token } = useAuth();
-    const { logout } = useAuthActions();
+  const { user, isAuthenticated, isCustomer, token } = useAuth();
+  const { logout } = useAuthActions();
 
-    // console.log(user,isAuthenticated,isCustomer, token)
+  // console.log(user,isAuthenticated,isCustomer, token)
   // Form states
   const [pickupAddress, setPickupAddress] = useState({
     street: '',
@@ -51,7 +52,7 @@ import { useAuthActions } from '@/hooks/useAuthActions';
       if (user?.role === 'admin') {
         router.push('/admin/dashboard');
       } else if (user?.role === 'agent') {
-        router.push('/agent/deliveries');
+        router.push('/agents/deliveries');
       }
     }
   }, [isAuthenticated, isCustomer, user?.role, router]);
@@ -177,7 +178,7 @@ import { useAuthActions } from '@/hooks/useAuthActions';
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status: 'cancelled' })
       });
@@ -707,11 +708,14 @@ import { useAuthActions } from '@/hooks/useAuthActions';
                   </div>
                 </div>
 
+                {/* Map visualization */}
                 <div className="mb-6">
                   <h3 className="text-md font-medium text-gray-900 mb-4">Delivery Route</h3>
-                  <div className="bg-gray-200 h-48 rounded-md flex items-center justify-center">
-                    <p className="text-gray-500">Map visualization would appear here with real-time tracking</p>
-                  </div>
+                  <LeafletRouteMap
+                    trackParcel={trackingData}
+                    currentLocation={null} // You can pass real current location if available
+                    isTracking={true}
+                  />
                 </div>
 
                 <div>

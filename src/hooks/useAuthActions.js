@@ -1,12 +1,12 @@
 import { useDispatch } from 'react-redux';
-import { 
-  setLoading, 
-  loginSuccess, 
-  registerSuccess, 
-  logout as logoutAction,  
-  setError, 
-  clearError as clearErrorAction,  
-  updateUser 
+import {
+  setLoading,
+  loginSuccess,
+  registerSuccess,
+  logout as logoutAction,
+  setError,
+  clearError as clearErrorAction,
+  updateUser
 } from '@/lib/slices/authSlice';
 
 
@@ -71,24 +71,52 @@ export const useAuthActions = () => {
     dispatch(clearErrorAction());
 
     try {
+      console.log('Registration attempt:', userData);
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log('Registration response status:', response.status);
+      console.log('Registration response text:', responseText);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        let errorMessage = 'Registration failed';
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = responseText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
-      dispatch(registerSuccess());
+      const data = JSON.parse(responseText);
+      console.log('Registration successful data:', data);
+
+      // FIXED: Pass user data and token to registerSuccess
+      dispatch(registerSuccess({
+        user: data.user, // Make sure your API returns user data
+        token: data.token // Make sure your API returns a token
+      }));
+
+      // Also store in localStorage
+      if (data.token && data.user) {
+        safeLocalStorage.setItem('token', data.token);
+        safeLocalStorage.setItem('user', JSON.stringify(data.user));
+      }
+
       return data;
     } catch (error) {
+      console.error('Registration error details:', error);
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
       dispatch(setError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 

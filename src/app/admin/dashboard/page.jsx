@@ -2,7 +2,7 @@
 import ParcelManagement from '@/components/ParcelManagement';
 import ParcelMetrics from '@/components/ParclMetrice';
 import ReportGenerator from '@/components/ReportGenerator';
-import { useAuth } from '@/hooks';
+import { useAuth, useAuthActions } from '@/hooks';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 
@@ -16,7 +16,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
   const { token, user, isAdmin } = useAuth();
-  const router = useRouter(); 
+  const { logout } = useAuthActions()
+  const router = useRouter();
 
   // Check if user is an admin
   useEffect(() => {
@@ -24,12 +25,12 @@ const AdminDashboard = () => {
       router.push('/auth/login');
       return;
     }
-    
+
     if (!isAdmin) {
       router.push('/unauthorized');
       return;
     }
-    
+
     fetchMetrics();
   }, [token, isAdmin, router]);
 
@@ -37,7 +38,7 @@ const AdminDashboard = () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/admin/dashboard');
-      
+
       if (response.ok) {
         const data = await response.json();
         setMetrics(data);
@@ -80,10 +81,10 @@ const AdminDashboard = () => {
           </div>
           <div className="flex space-x-4">
             <button
-              onClick={refreshMetrics}
+              onClick={logout}
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
             >
-              Refresh Data
+              Logout
             </button>
           </div>
         </div>
@@ -93,41 +94,37 @@ const AdminDashboard = () => {
       <nav className="bg-white shadow px-4 sm:px-6 lg:px-8">
         <div className="flex space-x-8 overflow-x-auto">
           <button
-            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-              activeTab === 'dashboard'
+            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'dashboard'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
             onClick={() => setActiveTab('dashboard')}
           >
             Dashboard
           </button>
           <button
-            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-              activeTab === 'parcels'
+            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'parcels'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
             onClick={() => setActiveTab('parcels')}
           >
             Parcel Management
           </button>
           <button
-            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-              activeTab === 'users'
+            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'users'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
             onClick={() => setActiveTab('users')}
           >
             User Management
           </button>
           <button
-            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-              activeTab === 'reports'
+            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'reports'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
             onClick={() => setActiveTab('reports')}
           >
             Reports & Analytics
@@ -139,15 +136,15 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {activeTab === 'dashboard' && (
-            <ParcelMetrics 
-              metrics={metrics} 
+            <ParcelMetrics
+              metrics={metrics}
               onRefresh={refreshMetrics}
               isLoading={isLoading}
             />
           )}
           {activeTab === 'parcels' && <ParcelManagement />}
           {activeTab === 'reports' && <ReportGenerator metrics={metrics} />}
-          
+
           {/* Placeholder for User Management tab */}
           {activeTab === 'users' && (
             <div className="p-6">
