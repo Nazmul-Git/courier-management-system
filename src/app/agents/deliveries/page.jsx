@@ -1,14 +1,13 @@
-'use client'
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Head from 'next/head';
 import { useAuth, useAuthActions } from '@/hooks';
 import dynamic from 'next/dynamic';
+
 const LeafletRouteMapWrapper = dynamic(
   () => import('@/components/map/LeafletRouteMapWrapper'),
   { ssr: false }
 );
-
 
 export default function AgentDashboard() {
   const { token, user, isAgent } = useAuth();
@@ -43,7 +42,7 @@ export default function AgentDashboard() {
   // Clean up geolocation watcher
   useEffect(() => {
     return () => {
-      if (watchId) {
+      if (watchId && typeof window !== 'undefined') {
         navigator.geolocation.clearWatch(watchId);
       }
     };
@@ -53,7 +52,7 @@ export default function AgentDashboard() {
     try {
       setIsLoading(true);
       const response = await fetch('/api/agents/deliveries', {
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -76,7 +75,7 @@ export default function AgentDashboard() {
       setRouteLoading(true);
 
       const response = await fetch('/api/agents/optimized-route', {
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -85,7 +84,6 @@ export default function AgentDashboard() {
         setActiveTab('route');
       } else {
         const errorData = await response.json().catch(() => ({}));
-        // console.error('Failed to fetch optimized route:', response.status, errorData);
         alert('Failed to generate optimized route');
       }
     } catch (error) {
@@ -106,18 +104,17 @@ export default function AgentDashboard() {
         body: JSON.stringify({
           parcelId,
           status: newStatus,
-          notes: deliveryNotes[parcelId] || ''
+          notes: deliveryNotes[parcelId] || '',
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setParcels(prev => prev.map(p =>
-          p.id === parcelId ? { ...p, ...data.parcel } : p
-        ));
+        setParcels((prev) =>
+          prev.map((p) => (p.id === parcelId ? { ...p, ...data.parcel } : p))
+        );
         alert('Status updated successfully!');
 
-        // Refresh route if status changed to delivered
         if (newStatus === 'delivered') {
           fetchOptimizedRoute();
         }
@@ -131,43 +128,34 @@ export default function AgentDashboard() {
   };
 
   const startLocationTracking = () => {
-    if (navigator.geolocation) {
-      setIsTracking(true);
-
-      // Get current position immediately
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          updateLocation(position);
-        },
-        (error) => {
-          alert('Please enable location services');
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
-
-      // Set up continuous tracking
-      const id = navigator.geolocation.watchPosition(
-        (position) => {
-          updateLocation(position);
-        },
-        (error) => {
-          setIsTracking(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 30000
-        }
-      );
-
-      setWatchId(id);
-    } else {
+    if (typeof window === 'undefined' || !('geolocation' in navigator)) {
       alert('Geolocation is not supported by this browser.');
+      return;
     }
+
+    setIsTracking(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        updateLocation(position);
+      },
+      () => {
+        alert('Please enable location services');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    const id = navigator.geolocation.watchPosition(
+      (position) => {
+        updateLocation(position);
+      },
+      () => {
+        setIsTracking(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
+
+    setWatchId(id);
   };
 
   const updateLocation = (position) => {
@@ -175,13 +163,13 @@ export default function AgentDashboard() {
       lat: position.coords.latitude,
       lng: position.coords.longitude,
       accuracy: position.coords.accuracy,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
     setCurrentLocation(newLocation);
   };
 
   const stopLocationTracking = () => {
-    if (watchId) {
+    if (watchId && typeof window !== 'undefined') {
       navigator.geolocation.clearWatch(watchId);
       setWatchId(null);
     }
@@ -192,7 +180,11 @@ export default function AgentDashboard() {
     setActiveTab('route');
     setTrackParcel(parcel);
     setTimeout(() => {
-      document.getElementById('delivery-route-section')?.scrollIntoView({ behavior: 'smooth' });
+      if (typeof window !== 'undefined') {
+        document
+          .getElementById('delivery-route-section')
+          ?.scrollIntoView({ behavior: 'smooth' });
+      }
     }, 100);
   };
 
@@ -200,22 +192,19 @@ export default function AgentDashboard() {
     try {
       const response = await fetch('/api/agents/optimized-route', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           trackingNumber,
           status: 'delivered',
-          notes
+          notes,
         }),
       });
 
       if (response.ok) {
-        const data = await response.json();
         alert('Delivery marked as completed!');
-        fetchAssignedParcels(); 
-        fetchOptimizedRoute(); 
+        fetchAssignedParcels();
+        fetchOptimizedRoute();
       } else {
         const errorData = await response.json().catch(() => ({}));
         alert(errorData.error || 'Failed to update delivery status');
@@ -228,32 +217,42 @@ export default function AgentDashboard() {
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case 'pending': return 'bg-gray-100 text-gray-800';
-      case 'assigned': return 'bg-blue-100 text-blue-800';
-      case 'picked_up': return 'bg-yellow-100 text-yellow-800';
-      case 'in_transit': return 'bg-orange-100 text-orange-800';
-      case 'out_for_delivery': return 'bg-purple-100 text-purple-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending':
+        return 'bg-gray-100 text-gray-800';
+      case 'assigned':
+        return 'bg-blue-100 text-blue-800';
+      case 'picked_up':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'in_transit':
+        return 'bg-orange-100 text-orange-800';
+      case 'out_for_delivery':
+        return 'bg-purple-100 text-purple-800';
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusText = (status) => {
-    return status ? status.split('_').map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ') : 'Unknown';
-  };
+  const getStatusText = (status) =>
+    status
+      ? status
+          .split('_')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
+      : 'Unknown';
 
   const getStatusOptions = (currentStatus) => {
     const statusFlow = {
-      'pending': ['assigned', 'cancelled'],
-      'assigned': ['picked_up', 'cancelled'],
-      'picked_up': ['in_transit', 'cancelled'],
-      'in_transit': ['out_for_delivery', 'cancelled'],
-      'out_for_delivery': ['delivered', 'cancelled'],
-      'delivered': [],
-      'cancelled': []
+      pending: ['assigned', 'cancelled'],
+      assigned: ['picked_up', 'cancelled'],
+      picked_up: ['in_transit', 'cancelled'],
+      in_transit: ['out_for_delivery', 'cancelled'],
+      out_for_delivery: ['delivered', 'cancelled'],
+      delivered: [],
+      cancelled: [],
     };
     return statusFlow[currentStatus] || [];
   };
@@ -268,15 +267,13 @@ export default function AgentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Head>
-        <title>Delivery Agent Dashboard</title>
-        <meta name="description" content="Manage your delivery assignments" />
-      </Head>
-
+      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Delivery Agent Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Delivery Agent Dashboard
+            </h1>
             <p className="text-sm text-gray-600 mt-1">Welcome, {user?.name}</p>
           </div>
           <div className="flex space-x-4">
@@ -291,7 +288,6 @@ export default function AgentDashboard() {
               onClick={logout}
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
             >
-              
               Logout
             </button>
           </div>
@@ -400,7 +396,7 @@ export default function AgentDashboard() {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => trackParcelOnMap(parcel)}
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1 px-3 rounded text-xs flex items-center"
+                              className="bg-indigo-600 hover:indigo-700 text-white font-medium py-1 px-3 rounded text-xs flex items-center"
                             >
                               📍 Track
                             </button>
@@ -488,7 +484,6 @@ export default function AgentDashboard() {
                   )}
                 </div>
 
-                {/* FIXED: Pass correct props to LeafletMap */}
                 <LeafletRouteMapWrapper
                   trackParcel={trackParcel}
                   optimizedRoute={optimizedRoute}
