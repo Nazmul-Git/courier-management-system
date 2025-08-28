@@ -40,7 +40,7 @@ export async function GET(request) {
     // Get parcels from last 7 days for chart data
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0); // Start of day
+    sevenDaysAgo.setHours(0, 0, 0, 0); 
     
     const dailyParcels = await Parcel.aggregate([
       {
