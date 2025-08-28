@@ -1,14 +1,11 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // Enable WebSocket support
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals.push({
-        'socket.io': 'commonjs socket.io',
-      });
-    }
-    return config;
+// next.config.js
+module.exports = {
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,
+      },
+    ];
   },
 };
-
-export default nextConfig;

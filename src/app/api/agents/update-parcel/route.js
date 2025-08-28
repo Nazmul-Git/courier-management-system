@@ -2,8 +2,8 @@
 
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import Parcel from '@/models/Parcel';
-import dbConnect from '@/lib/dbConnect';
+import Parcel from '@/lib/models/Parcel';
+import dbConnect from '@/lib/db';
 
 async function verifyAuth(request) {
   const token = request.cookies.get('auth_token')?.value;
