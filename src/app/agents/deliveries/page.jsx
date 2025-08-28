@@ -3,7 +3,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
 import { useAuth, useAuthActions } from '@/hooks';
-import LeafletRouteMap from '@/components/map/LeafletRouteMap';
+import dynamic from 'next/dynamic';
+const LeafletRouteMapWrapper = dynamic(
+  () => import('@/components/map/LeafletRouteMapWrapper'),
+  { ssr: false }
+);
 
 
 export default function AgentDashboard() {
@@ -485,7 +489,7 @@ export default function AgentDashboard() {
                 </div>
 
                 {/* FIXED: Pass correct props to LeafletMap */}
-                <LeafletRouteMap
+                <LeafletRouteMapWrapper
                   trackParcel={trackParcel}
                   optimizedRoute={optimizedRoute}
                   currentLocation={currentLocation}
