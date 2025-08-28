@@ -3,9 +3,6 @@ const nextConfig = {
   // Enable standalone output for better optimization
   output: 'standalone',
   
-  // Enable SWC minification
-  swcMinify: true,
-  
   // Handle external packages
   webpack: (config, { isServer }) => {
     if (isServer) {
