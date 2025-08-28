@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    MONGODB_URI: process.env.MONGODB_URI,
+  },
   // Enable standalone output for better optimization
   output: 'standalone',
   
@@ -9,7 +12,6 @@ const nextConfig = {
       config.externals = [
         ...(config.externals || []),
         {
-          'socket.io': 'commonjs socket.io',
           'mongodb': 'commonjs mongodb',
           'mongoose': 'commonjs mongoose'
         }
