@@ -4,7 +4,14 @@ import { useRouter } from 'next/navigation';
 import Head from 'next/head';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthActions } from '@/hooks/useAuthActions';
-import LeafletRouteMap from '@/components/map/LeafletRouteMap';
+import dynamic from 'next/dynamic'
+
+const LeafletRouteMapWrapper = dynamic(
+  () => import('@/components/map/LeafletRouteMapWrapper'),
+  { ssr: false }
+);
+
+
 
 // Known locations in Dhaka for better accuracy
 const KNOWN_DHAKA_LOCATIONS = {
@@ -797,7 +804,7 @@ const CustomerParcelsPage = () => {
                 {/* Map visualization */}
                 <div className="mb-6">
                   <h3 className="text-md font-medium text-gray-900 mb-4">Delivery Route</h3>
-                  <LeafletRouteMap
+                  <LeafletRouteMapWrapper
                     trackParcel={trackingData}
                     currentLocation={customerLocation} 
                     isTracking={true}
